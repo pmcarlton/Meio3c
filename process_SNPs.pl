@@ -47,21 +47,19 @@ if (/^\n$/) {
 for $iter(0..$e){
 #$cutstring=$snp[$iter]{'cuts'};
 @c=split(" ",$snp[$iter]{'cuts'});
-#OCTAVE IS TOO SLOW:$aa="a=[".$cutstring."];"; $bb="disp(abs(a-500));"; $doit="\"$aa $bb\""; $ret = `/opt/local/bin/octave -q --eval $doit`;
-$#cut1=-1;$minacc=10000;$ee=0;
+$#cut1=-1;$minacc=10000;$ee=0;$minind=(-5);
 for $cc(@c){
   $r=abs($cc-500);
   push @cut1,$r;
-  if($minacc > $r) {
-	$minacc=$r;$minind=$ee;
-  }
+  if($minacc > $r) { $minacc=$r;$minind=$ee; }
   $ee++;
 }
+#if($minind < 0) {die "Something's jacked up!!";} ##died at EOF, so keep it out for now
 
-if($minind<=1) {$minind1=0;}
-else {$minind1 = $minind-2;}
-if($minind>=($#c-1)) {$minind2=$#c;}
-else {$minind2 = $minind+2;}
+if($minind<=1) {$minind1=0;} else {$minind1 = $minind-2;}
+if($minind>=($#c-1)) {$minind2=$#c;} else {$minind2 = $minind+2;}
+$#goodCut=-1;
+for $li($minind1..$minind2){push @goodCut,$c[$li];}
 
 #for $iter(0..$e){
   if($snp[$iter]{'matched'}) {
@@ -69,7 +67,7 @@ else {$minind2 = $minind+2;}
 	  #print $snp[$iter]{'xs'},"\n";
 	  print $snp[$iter]{'seq'},"\n";
 	  for $li($minind1..$minind2) {print $c[$li]," ";}
-	  print "\n $minind mi $minind1 m1 $minind2 m2 \n";
+#	  print "\n $minind mi $minind1 m1 $minind2 m2 \n";
 	  #print $snp[$iter]{'cuts'},"\n";
 	  print "= \n";
 #	  print $ret,"\n";
