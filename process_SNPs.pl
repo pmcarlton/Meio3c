@@ -10,7 +10,8 @@
 
 
 $fn=shift; open IN,$fn;
-$matchenz=shift;
+$matchenz=shift; #case-insensitve
+$dist=shift; #minimum room from the central SNP on either the left or right sides
 $e=0;
 
 while(<IN>) {
@@ -28,7 +29,8 @@ chomp;
 push @seq,$_;
 }
 
-if (/$matchenz/i) {
+#if (/$matchenz/i) {
+if (/\W$matchenz\W/i) { ##NEED THE \W to prevent MaeII =~ MaeIII &c.
   $snp[$e]{'matched'}=1;   #now we can say this SNP has matched the enzyme
   for $num(@line) {
 	push @cuts,$num if ($num =~ /^\d+$/);
@@ -45,7 +47,7 @@ if (/^\n$/) {
 
 #if you want to select certain cut parameters, such as ±N from the center
 for $iter(0..$e){
-#$cutstring=$snp[$iter]{'cuts'};
+  if($snp[$iter]{'matched'}) {
 @c=split(" ",$snp[$iter]{'cuts'});
 $#cut1=-1;$minacc=10000;$ee=0;$minind=(-5);
 for $cc(@c){
@@ -55,23 +57,41 @@ for $cc(@c){
   $ee++;
 }
 #if($minind < 0) {die "Something's jacked up!!";} ##died at EOF, so keep it out for now
+$snploc=$c[$minind];
 
-if($minind<=1) {$minind1=0;} else {$minind1 = $minind-2;}
-if($minind>=($#c-1)) {$minind2=$#c;} else {$minind2 = $minind+2;}
-$#goodCut=-1;
-for $li($minind1..$minind2){push @goodCut,$c[$li];}
+if($minind<=1) {$minind1=0;} else {$minind1 = $minind-1;}
+if($minind>=($#c-1)) {$minind2=$#c;} else {$minind2 = $minind+1;}
+$#goodcut=-1;
+$fe=0;
+for $lli($minind1..$minind2){
+if($c[$minind]==$c[$lli]) {$snpind=$fe;}
+$fe++;
+push @goodcut,$c[$lli];
+}
+#now "goodcut" has the locations of ±2 from the center..but maybe this is unnecessary
 
-#for $iter(0..$e){
-  if($snp[$iter]{'matched'}) {
-	  print $snp[$iter]{'name'},"\n";
-	  #print $snp[$iter]{'xs'},"\n";
-	  print $snp[$iter]{'seq'},"\n";
-	  for $li($minind1..$minind2) {print $c[$li]," ";}
-#	  print "\n $minind mi $minind1 m1 $minind2 m2 \n";
-	  #print $snp[$iter]{'cuts'},"\n";
-	  print "= \n";
-#	  print $ret,"\n";
+$printflag=1;	#deciding whether to print the record or not.
+if ($minind1==$minind2) {$printflag=0;} #easy case
+if ($#goodcut==1) {if(abs($goodcut[0]-$goodcut[1])<$dist) {$printflag=0;}}
+$tst1=10000;$tst2=10000;
+if ($#goodcut==2) {
+	if(($snpind==0) | ($snpind==2)) {$tst1=$goodcut[1];}
+	elsif (($snpind==1)) {$tst1=$goodcut[0];$tst2=$goodcut[2];}
+	else {die "Something jacked up!\n";}
+	if ((abs($snploc-$tst1)<$dist)|(abs($snploc-$tst2)<$dist)) {$printflag=0;}
+	}
+if($#goodcut>2) {die "jacked!";}
+
+
+if ($printflag) {
+print ":::Record begin\n";
+  print $snp[$iter]{'name'},"\n";
+  print $snp[$iter]{'seq'},"\n";
+print "the index of the snp is $snpind :\n";
+  for $loc(@goodcut) {print $loc," ";}
+  #for $li($minind1..$minind2) {print $c[$li]," ";}
+  print "= \n";
 	}
   }
-
+}
 close IN;
