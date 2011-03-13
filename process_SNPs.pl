@@ -43,13 +43,36 @@ if (/^\n$/) {
 
 }
 
-print $e;print "\n";
+#if you want to select certain cut parameters, such as ±N from the center
 for $iter(0..$e){
+#$cutstring=$snp[$iter]{'cuts'};
+@c=split(" ",$snp[$iter]{'cuts'});
+#OCTAVE IS TOO SLOW:$aa="a=[".$cutstring."];"; $bb="disp(abs(a-500));"; $doit="\"$aa $bb\""; $ret = `/opt/local/bin/octave -q --eval $doit`;
+$#cut1=-1;$minacc=10000;$ee=0;
+for $cc(@c){
+  $r=abs($cc-500);
+  push @cut1,$r;
+  if($minacc > $r) {
+	$minacc=$r;$minind=$ee;
+  }
+  $ee++;
+}
+
+if($minind<=1) {$minind1=0;}
+else {$minind1 = $minind-2;}
+if($minind>=($#c-1)) {$minind2=$#c;}
+else {$minind2 = $minind+2;}
+
+#for $iter(0..$e){
   if($snp[$iter]{'matched'}) {
 	  print $snp[$iter]{'name'},"\n";
 	  #print $snp[$iter]{'xs'},"\n";
 	  print $snp[$iter]{'seq'},"\n";
-	  print $snp[$iter]{'cuts'},"\n";
+	  for $li($minind1..$minind2) {print $c[$li]," ";}
+	  print "\n $minind mi $minind1 m1 $minind2 m2 \n";
+	  #print $snp[$iter]{'cuts'},"\n";
+	  print "= \n";
+#	  print $ret,"\n";
 	}
   }
 
